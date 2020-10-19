@@ -1,3 +1,5 @@
+#This script compiles data and calculate long-term trend for figure 1.
+
 #Calculate the d13C z-score of all WEu mid-latitude records that cover a significant part of the last deglaciation
 
 library(tidyverse)
@@ -14,7 +16,7 @@ library("ggsci")
 
 
 #Load data and count the entities 
-d <- read.csv("Selected_records.csv") 
+d <- read.csv("Data/Selected_records.csv") 
 
 
 #Show the selected cave sites on a map
@@ -47,42 +49,6 @@ original.ts <-
                      axis.line = element_line(colour = "black")) 
   
 original.ts + scale_color_npg() #scale_fill_brewer(palette = "Set2")
-
-#split by entity_id and calculate z-score
-fn <- function(x) (x-mean(x))/sd(x)
-zscore_d13C <- unlist(tapply(d$d13C_measurement, d$entity_id, fn))
-d_new <- cbind(d, zscore_d13C)
-
-
-#Plot the zscores
-zscore.ts <- 
-  ggplot(data = d_new, aes(x = interp_age, y = zscore_d13C, colour = entity_name)) +
-  geom_line() + 
-  xlab('Age (U-Th, yr BP)') +
-  ylab('zscore d13C') +
-  theme_bw() + theme(panel.border = element_blank(), panel.grid.major = element_blank(),
-                     axis.line = element_line(colour = "black")) 
-
-zscore.ts + scale_color_npg() #scale_fill_brewer(palette = "Set2")
-
-
-#Calculate rolling mean
-rm <-  function(x) (rollmean(x, 9, fill = NA,
-               align = c("center", "left", "right"))) #d$d13C_measurement[1:70]
-rm_d13C <- unlist(tapply(d_new$d13C_measurement, d_new$entity_id, rm)) 
-d_new <- cbind(d_new, rm_d13C)
-
-
-#Plot the rolling means
-rm.ts <- 
-  ggplot(data = d_new, aes(x = interp_age, y = rm_d13C, colour = entity_name)) +
-  geom_line() + 
-  xlab('Age (U-Th, yr BP)') +
-  ylab('moving average d13C') +
-  theme_bw() + theme(panel.border = element_blank(), panel.grid.major = element_blank(),
-                     axis.line = element_line(colour = "black")) 
-
-rm.ts + scale_color_npg() #scale_fill_brewer(palette = "Set2")
 
 
 #Calculate long term trend using NESTool
