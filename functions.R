@@ -1,19 +1,4 @@
-# thresh_proxy ########################################################################################################################
-# Find best solutions for the model calibrating against a proxy
-# Filter model data based on closest matching proxy values, loop through proxy values
-# Find values that are within a threshold of the measured proxy (e.g., within +/- 5% of the proxy)
-# source("helpers/functionscript.R")
-thresh_proxy <- function(model, model.col = 4, proxy, proxy.col = 3, proxy.age = 0, thresh = 30){
-  output <- NULL
-  #model <- tibble::add_column(model, ts=NA)
-  for (i in 1:dim(proxy)[1]) {
-    #Find values that are within thresh of the measured proxy value
-    thresh.values <- filter(model, model[model.col] <= proxy[i,proxy.col]*(1+thresh/100) & model[model.col]  >= proxy[i,proxy.col]*(1-thresh/100)) 
-    thresh.values$ts <- proxy[i, proxy.age]
-    output <- rbind(output, thresh.values)
-  }
-  return(output)
-}
+#Auxiliary functions used for Match_data_model_Candela scripts
 
 # eucl_proxy ########################################################################################################################
 # Find best solutions for the model calibrating against a proxy
@@ -27,7 +12,7 @@ thresh_proxy <- function(model, model.col = 4, proxy, proxy.col = 3, proxy.age =
   model.col.min  <- NULL 
     for (i in 1:dim(proxy)[1]) {
     dist <- sqrt((model[,model.col] - proxy[i,proxy.col])^2) # euclidean distance
-    lowest <- quantile(dist, probs = c(0.05)) #Selects the lowest 20% of the distances
+    lowest <- quantile(dist, probs = c(0.05)) #Selects the lowest 5% of the distances
     min.which <- which(dist <= lowest)  #which(dist[(dist <= lowest)])
     #min.which <- which(dist == min(dist))
     model.col.min <- c(model.col.min, min.which) # multiple min vals
@@ -74,20 +59,30 @@ ci_proxy <- function(model, model.col = 4, proxy, proxy.col = 3, proxy.age = 0){
 
 # constr_soln ########################################################################################################################
 # Further constrain the solution by matching several proxies
+# Using ci_proxy function to match 
 constr_soln <- function(soln, soln.col = 5, proxy, proxy.col = 3, proxy.age = 0){
   output <- NULL
   for (t in proxy$ts) { 
     soln_ts <- soln %>% filter(ts == t) #%>% select(-ts)
     stal_data_ts <- proxy %>% filter(ts == t) #%>% select(-ts)
-    #output.new <- thresh_proxy(model = soln_ts, model.col = soln.col, proxy = stal_data_ts, proxy.col = proxy.col, proxy.age = proxy.age)
-    #output.new <- eucl_proxy(model = soln_ts, model.col = soln.col, proxy = stal_data_ts, proxy.col = proxy.col, proxy.age = proxy.age)
     output.new <- ci_proxy(model = soln_ts, model.col = soln.col, proxy = stal_data_ts, proxy.col = proxy.col, proxy.age = proxy.age)
     output <- rbind(output, output.new) # append
   }
   return(output)
 }
 
-
+# Further constrain the solution by matching several proxies
+# Using eucl_proxy function to match 
+constr_soln2 <- function(soln, soln.col = 5, proxy, proxy.col = 3, proxy.age = 0){
+  output <- NULL
+  for (t in proxy$ts) { 
+    soln_ts <- soln %>% filter(ts == t) #%>% select(-ts)
+    stal_data_ts <- proxy %>% filter(ts == t) #%>% select(-ts)
+    output.new <- eucl_proxy(model = soln_ts, model.col = soln.col, proxy = stal_data_ts, proxy.col = proxy.col, proxy.age = proxy.age)
+    output <- rbind(output, output.new) # append
+  }
+  return(output)
+}
 
 # CaveCalc data extraction ##########################################################################################################
 #Extract the data from CaveCalc .mat output files
