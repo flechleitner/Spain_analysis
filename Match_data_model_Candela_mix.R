@@ -16,7 +16,7 @@ source("functions.R")
 # Input data coming from the .csv file:
 
 # Load stalagmite measured data
-stal_data <- read.csv("Data/CAN_input_lowres_new.csv", stringsAsFactors = F) # MW   stringsAsFactors
+stal_data <- read.csv("Data/CAN_input_lowres_final.csv", stringsAsFactors = F) # MW   stringsAsFactors
 
 # Load CaveCalc model output: load results from each mixing line as one batch.
 # LG dataset
